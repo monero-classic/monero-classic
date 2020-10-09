@@ -34,6 +34,7 @@
 #include <limits>
 #include "misc_log_ex.h"
 #include "crypto/hash.h"
+#include "cryptonote_config.h"
 #include "cryptonote_basic/difficulty.h"
 
 using namespace std;
