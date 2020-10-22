@@ -69,10 +69,10 @@
 
 #define FEE_PER_KB_OLD                                  ((uint64_t)10000000000) // pow(10, 10)
 #define FEE_PER_KB                                      ((uint64_t)2000000000) // 2 * pow(10, 9)
-#define FEE_PER_BYTE                                    ((uint64_t)300000)
-#define DYNAMIC_FEE_PER_KB_BASE_FEE                     ((uint64_t)2000000000) // 2 * pow(10,9)
+#define FEE_PER_BYTE                                    ((uint64_t)3000000)
+#define DYNAMIC_FEE_PER_KB_BASE_FEE                     ((uint64_t)20000000000) // 2 * pow(10,9)
 #define DYNAMIC_FEE_PER_KB_BASE_BLOCK_REWARD            ((uint64_t)10000000000000) // 10 * pow(10,12)
-#define DYNAMIC_FEE_PER_KB_BASE_FEE_V5                  ((uint64_t)2000000000 * (uint64_t)CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2 / CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V5)
+#define DYNAMIC_FEE_PER_KB_BASE_FEE_V5                  ((uint64_t)4000000000 * (uint64_t)CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2 / CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V5)
 #define DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT         ((uint64_t)3000)
 
 #define ORPHANED_BLOCKS_MAX_COUNT                       100
@@ -162,7 +162,7 @@
 #define HF_VERSION_LONG_TERM_BLOCK_WEIGHT       10
 */
 
-#define HF_VERSION_DYNAMIC_FEE                  4
+#define HF_VERSION_DYNAMIC_FEE                  80
 #define HF_VERSION_MIN_MIXIN_4                  6
 #define HF_VERSION_MIN_MIXIN_6                  0xee
 #define HF_VERSION_MIN_MIXIN_10                 0xee
@@ -171,7 +171,7 @@
 #define HF_VERSION_SMALLER_BP                   0xee
 #define HF_VERSION_LONG_TERM_BLOCK_WEIGHT       0xee
 
-#define PER_KB_FEE_QUANTIZATION_DECIMALS        8
+#define PER_KB_FEE_QUANTIZATION_DECIMALS        80
 
 #define HASH_OF_HASHES_STEP                     256
 
@@ -187,7 +187,7 @@
 // New constants are intended to go here
 namespace config
 {
-  uint64_t const DEFAULT_FEE_ATOMIC_XMR_PER_KB = 500; // Just a placeholder!  Change me!
+  uint64_t const DEFAULT_FEE_ATOMIC_XMR_PER_KB = 1000; // Just a placeholder!  Change me!
   uint8_t const FEE_CALCULATION_MAX_RETRIES = 10;
   uint64_t const DEFAULT_DUST_THRESHOLD = ((uint64_t)2000000000); // 2 * pow(10, 9)
   uint64_t const BASE_REWARD_CLAMP_THRESHOLD = ((uint64_t)100000000); // pow(10, 8)
