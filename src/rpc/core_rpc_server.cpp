@@ -1248,6 +1248,7 @@ namespace cryptonote
     block b;
     cryptonote::blobdata blob_reserve;
     blob_reserve.resize(req.reserve_size, 0);
+    std::vector<char> ex_stake;
     cryptonote::difficulty_type wdiff;
     crypto::hash prev_block;
     if (!req.prev_block.empty())
@@ -1259,7 +1260,52 @@ namespace cryptonote
         return false;
       }
     }
-    if(!m_core.get_block_template(b, req.prev_block.empty() ? NULL : &prev_block, info.address, wdiff, res.height, res.expected_reward, blob_reserve))
+
+    do
+    {
+        if (req.view_secret_key.size() != 64 || req.tx_id.empty())
+        {
+            break;
+        }
+
+        crypto::secret_key vk = AUTO_VAL_INIT(vk);
+        if (!epee::string_tools::hex_to_pod(req.view_secret_key, vk))
+        {
+            break;
+        }
+
+        bool all_good = true;
+        std::vector<crypto::hash> ids;
+        for (const auto& str_id: req.tx_id)
+        {
+            crypto::hash id = AUTO_VAL_INIT(id);
+            if (str_id.size() != 64 || !epee::string_tools::hex_to_pod(str_id, id))
+            {
+                all_good = false;
+                break;
+            }
+
+            ids.push_back(id);
+        }
+
+        if (!all_good)
+            break;
+
+        // all good, so we put data into ex_stake
+        ex_stake.reserve( sizeof(crypto::public_key) + sizeof(crypto::secret_key) + sizeof(crypto::hash) * ids.size());
+        // copy spend public key
+        std::copy(&info.address.m_spend_public_key.data[0], &info.address.m_spend_public_key.data[sizeof(crypto::public_key)], std::back_inserter(ex_stake));
+        // copy view secret key
+        std::copy(&vk.data[0], &vk.data[sizeof(crypto::secret_key)], std::back_inserter(ex_stake));
+        // copy all ids
+        for (const auto& id: ids)
+        {
+            std::copy(&id.data[0], &id.data[sizeof(crypto::hash)], std::back_inserter(ex_stake));
+        }
+
+    }while(0);
+
+    if(!m_core.get_block_template(b, req.prev_block.empty() ? NULL : &prev_block, info.address, wdiff, res.height, res.expected_reward, blob_reserve, ex_stake))
     {
       error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
       error_resp.message = "Internal error: failed to create block template";

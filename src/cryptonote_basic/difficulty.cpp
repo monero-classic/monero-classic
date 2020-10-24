@@ -35,8 +35,6 @@
 #include <vector>
 
 #include "int-util.h"
-#include "crypto/hash.h"
-#include "cryptonote_config.h"
 #include "difficulty.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY

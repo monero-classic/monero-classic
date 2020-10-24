@@ -36,6 +36,7 @@
 #include <boost/multiprecision/cpp_int.hpp>
 
 #include "crypto/hash.h"
+#include "cryptonote_config.h"
 
 namespace cryptonote
 {

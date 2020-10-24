@@ -103,7 +103,7 @@ static const struct {
   { 4, 1220516, 0, 1483574400 },
   
   // version 5 starts from block 1288616, which is on or around the 15th of April, 2017. Fork time finalised on 2017-03-14.
-  { 5, 1288616, 0, 1489520158 },  
+  { 5, 1288616, 0, 1489520158 },
 
   // version 6 starts from block 1400000, which is on or around the 16th of September, 2017. Fork time finalised on 2017-08-18.
   { 6, 1400000, 0, 1503046577 },
@@ -1250,6 +1250,42 @@ bool Blockchain::prevalidate_miner_transaction(const block& b, uint64_t height)
 bool Blockchain::validate_miner_transaction(const block& b, size_t cumulative_block_weight, uint64_t fee, uint64_t& base_reward, uint64_t already_generated_coins, bool &partial_block_reward, uint8_t version)
 {
   LOG_PRINT_L3("Blockchain::" << __func__);
+
+  uint64_t height = boost::get<txin_gen>(b.miner_tx.vin[0]).height;
+  double pos_reward_rate = 0.0;
+  crypto::public_key spk = AUTO_VAL_INIT(spk);
+  crypto::secret_key vsk = AUTO_VAL_INIT(vsk);
+  std::vector<crypto::hash> ti = AUTO_VAL_INIT(ti);
+  bool r = get_tx_stake_from_extra(spk, vsk, ti, b.miner_tx.extra, 0);
+  if (r)
+  {
+      // miner use pos, we should make check
+      // 1. check if vout and spk, vsk match
+      crypto::public_key tx_pub_key = cryptonote::get_tx_pub_key_from_extra(b.miner_tx.extra);
+
+      account_keys acc;
+      acc.m_view_secret_key = vsk;
+      acc.m_account_address.m_spend_public_key = spk;
+
+      r = false;
+      for (size_t i = 0; i < b.miner_tx.vout.size(); ++i)
+      {
+          const tx_out& tax_out = b.miner_tx.vout[i];
+          std::vector<crypto::public_key> additional_derivations;
+          r = cryptonote::is_out_to_acc(acc, boost::get<txout_to_key>(tax_out.target), tx_pub_key, additional_derivations, i);
+          // there are should be two outputs, one is miner reward, another is funding reward, we need miner reward be true should ok
+          if (r) break;
+      }
+      CHECK_AND_ASSERT_MES(r, false, "failed to validate miner's stake extra");
+
+      // 2. check if amount match pos's stake
+      crypto::public_key vpk = AUTO_VAL_INIT(vpk);
+      r = crypto::secret_key_to_public_key(vsk, vpk);
+      CHECK_AND_ASSERT_MES(r, false, "illegal view secret key in stake extra");
+
+      r = check_miner_stakes(spk, vsk, ti, height, pos_reward_rate);
+  }
+
   //validate reward
   uint64_t money_in_use = 0;
   for (auto& o: b.miner_tx.vout)
@@ -1270,9 +1306,9 @@ bool Blockchain::validate_miner_transaction(const block& b, size_t cumulative_bl
     }
   }
 
-  uint64_t height = boost::get<txin_gen>(b.miner_tx.vin[0]).height;
   uint64_t funding_amount = 0;
   uint64_t miner_reward_amount = 0;
+
 //  cryptonote::BlockFunding fundctl;
 //  CHECK_AND_ASSERT_MES(fundctl.init(m_nettype), false, "init fundctl failed");
 //  if (fundctl.funding_enabled(height))
@@ -1293,6 +1329,9 @@ bool Blockchain::validate_miner_transaction(const block& b, size_t cumulative_bl
     MERROR_VER("block weight " << cumulative_block_weight << " is bigger than allowed for this blockchain");
     return false;
   }
+
+  uint64_t std_reward = base_reward;
+
   if(base_reward + fee < money_in_use)
   {
     MERROR_VER("coinbase transaction spend too much money (" << print_money(money_in_use) << "). Block reward is " << print_money(base_reward + fee) << "(" << print_money(base_reward) << "+" << print_money(fee) << ")");
@@ -1324,8 +1363,10 @@ bool Blockchain::validate_miner_transaction(const block& b, size_t cumulative_bl
 //    bool ret = fundctl.check_block_funding(miner_reward_amount, funding_amount, base_reward + fee);
     uint64_t adjust_height = m_nettype == TESTNET ? DIFFICULTY_ADJUST_HEIGHT_TESTNET : DIFFICULTY_ADJUST_HEIGHT;
     bool fork = height >= adjust_height;
-    bool ret = m_fundctl.check_block_funding(miner_reward_amount, funding_amount, base_reward + fee, fork);
-    MINFO("miner_reward_amount=" << miner_reward_amount << ", funding_amount=" << funding_amount << ", money_in_use=" << (base_reward + fee));
+
+    bool ret = m_fundctl.check_block_funding(miner_reward_amount - fee, funding_amount, std_reward, pos_reward_rate, fork);
+    MINFO("miner_reward_amount=" << miner_reward_amount << ", funding_amount=" << funding_amount << ", money_in_use=" << (base_reward + fee)
+          << ", base_rewad=" << base_reward << ", fee=" << fee);
     CHECK_AND_ASSERT_MES(ret, false, "check reward failed");
   }
   return true;
@@ -1418,7 +1459,7 @@ uint64_t Blockchain::get_current_cumulative_block_weight_median() const
 // in a lot of places.  That flag is not referenced in any of the code
 // nor any of the makefiles, howeve.  Need to look into whether or not it's
 // necessary at all.
-bool Blockchain::create_block_template(block& b, const crypto::hash *from_block, const account_public_address& miner_address, difficulty_type& diffic, uint64_t& height, uint64_t& expected_reward, const blobdata& ex_nonce)
+bool Blockchain::create_block_template(block& b, const crypto::hash *from_block, const account_public_address& miner_address, difficulty_type& diffic, uint64_t& height, uint64_t& expected_reward, const blobdata& ex_nonce, const std::vector<char>& ex_stake)
 {
   LOG_PRINT_L3("Blockchain::" << __func__);
   size_t median_weight;
@@ -1522,12 +1563,31 @@ bool Blockchain::create_block_template(block& b, const crypto::hash *from_block,
 
   CHECK_AND_ASSERT_MES(diffic, false, "difficulty overhead.");
 
+  // calculate pos reward
+  double pos_reward_rate = 0.0;
+  if (!ex_stake.empty())
+  {
+      crypto::public_key spk = AUTO_VAL_INIT(spk);
+      crypto::secret_key vsk = AUTO_VAL_INIT(vsk);
+      std::vector<crypto::hash> ti = AUTO_VAL_INIT(ti);
+      bool r = get_tx_stake_from_extra(spk, vsk, ti, ex_stake);
+      CHECK_AND_ASSERT_MES(r, false, "failed to parse tx extra stake");
+      CHECK_AND_ASSERT_MES(spk == miner_address.m_spend_public_key, false, "failed to construct stake extra spend pub key");
+
+      crypto::public_key pkey = AUTO_VAL_INIT(pkey);
+      r = crypto::secret_key_to_public_key(vsk, pkey);
+      CHECK_AND_ASSERT_MES(r, false, "failed to verify view key secret key");
+      CHECK_AND_ASSERT_MES(pkey == miner_address.m_view_public_key, false, "view secret key does not match mine address");
+      CHECK_AND_ASSERT_MES(check_miner_stakes(spk, vsk, ti, height, pos_reward_rate), false, "check miner's pos failed");
+  }
+
   size_t txs_weight;
   uint64_t fee;
   if (!m_tx_pool.fill_block_template(b, median_weight, already_generated_coins, txs_weight, fee, expected_reward, b.major_version))
   {
     return false;
   }
+  //expected_reward += pos_reward;
   pool_cookie = m_tx_pool.cookie();
 #if defined(DEBUG_CREATE_BLOCK_TEMPLATE)
   size_t real_txs_weight = 0;
@@ -1590,7 +1650,7 @@ bool Blockchain::create_block_template(block& b, const crypto::hash *from_block,
   uint8_t hf_version = b.major_version;
   size_t max_outs = hf_version >= 4 ? 1 : 11;
 //  bool r = construct_miner_tx(height, median_weight, already_generated_coins, txs_weight, fee, miner_address, b.miner_tx, ex_nonce, max_outs, hf_version);
-  bool r = construct_miner_tx(height, median_weight, already_generated_coins, txs_weight, fee, miner_address, b.miner_tx, ex_nonce, max_outs, hf_version, m_nettype);
+  bool r = construct_miner_tx(height, median_weight, already_generated_coins, txs_weight, fee, miner_address, b.miner_tx, ex_nonce, max_outs, hf_version, m_nettype, ex_stake, pos_reward_rate);
   CHECK_AND_ASSERT_MES(r, false, "Failed to construct miner tx, first chance");
   size_t cumulative_weight = txs_weight + get_transaction_weight(b.miner_tx);
 #if defined(DEBUG_CREATE_BLOCK_TEMPLATE)
@@ -1600,7 +1660,7 @@ bool Blockchain::create_block_template(block& b, const crypto::hash *from_block,
   for (size_t try_count = 0; try_count != 10; ++try_count)
   {
 //    r = construct_miner_tx(height, median_weight, already_generated_coins, cumulative_weight, fee, miner_address, b.miner_tx, ex_nonce, max_outs, hf_version);
-    r = construct_miner_tx(height, median_weight, already_generated_coins, cumulative_weight, fee, miner_address, b.miner_tx, ex_nonce, max_outs, hf_version, m_nettype);
+    r = construct_miner_tx(height, median_weight, already_generated_coins, cumulative_weight, fee, miner_address, b.miner_tx, ex_nonce, max_outs, hf_version, m_nettype, ex_stake, pos_reward_rate);
 
     CHECK_AND_ASSERT_MES(r, false, "Failed to construct miner tx, second chance");
     size_t coinbase_weight = get_transaction_weight(b.miner_tx);
@@ -1652,9 +1712,9 @@ bool Blockchain::create_block_template(block& b, const crypto::hash *from_block,
   return false;
 }
 //------------------------------------------------------------------
-bool Blockchain::create_block_template(block& b, const account_public_address& miner_address, difficulty_type& diffic, uint64_t& height, uint64_t& expected_reward, const blobdata& ex_nonce)
+bool Blockchain::create_block_template(block& b, const account_public_address& miner_address, difficulty_type& diffic, uint64_t& height, uint64_t& expected_reward, const blobdata& ex_nonce, const std::vector<char>& ex_stake)
 {
-  return create_block_template(b, NULL, miner_address, diffic, height, expected_reward, ex_nonce);
+  return create_block_template(b, NULL, miner_address, diffic, height, expected_reward, ex_nonce, ex_stake);
 }
 //------------------------------------------------------------------
 // for an alternate chain, get the timestamps from the main chain to complete
@@ -5080,6 +5140,108 @@ void Blockchain::cache_block_template(const block &b, const cryptonote::account_
   m_btc_expected_reward = expected_reward;
   m_btc_pool_cookie = pool_cookie;
   m_btc_valid = true;
+}
+
+bool Blockchain::check_miner_stakes(const public_key &spend_pubkey, const crypto::secret_key& view_seckey, const std::vector<hash> &ti, uint64_t height, double &stake_reward_rate)
+{
+    stake_reward_rate = 0.0;
+    hw::device &hwd = hw::get_device("default");
+    bool r = false;
+
+    for(const auto& txid: ti)
+    {
+        cryptonote::blobdata bd;
+        if (!m_db->get_tx_blob(txid, bd))
+            continue;
+
+        transaction tx;
+        if (!parse_and_validate_tx_from_blob(bd, tx))
+            continue;
+
+        uint64_t amount = 0, tx_block_height = 0, tx_block_time = 0;
+
+        // we only need locked tx, and since tx is locked, so it's unspent, thus we don't need check double spend.
+        if (is_tx_spendtime_unlocked(tx.unlock_time))
+            continue;
+
+        // we don't want coinbase tx
+        if (is_coinbase(tx))
+            continue;
+
+        tx_block_height = m_db->get_tx_block_height(txid);
+        if (!tx_block_height)
+            continue;
+
+        tx_block_time = m_db->get_block_timestamp(tx_block_height);
+        if (!tx_block_time)
+            continue;
+
+        const crypto::public_key tx_pub_key = get_tx_pub_key_from_extra(tx);
+        if (tx_pub_key == null_pkey)
+            continue;
+
+        crypto::key_derivation derivation;
+        r = hwd.generate_key_derivation(tx_pub_key, view_seckey, derivation);
+        if (!r)
+            continue;
+
+        const rct::rctSig& rv = tx.rct_signatures;
+
+        // scan all output, calculate amount
+        for(size_t i = 0; i < tx.vout.size(); ++i)
+        {
+            const cryptonote::tx_out& vo = tx.vout[i];
+
+            // we only need txout_to_key
+            if (vo.target.type() !=  typeid(txout_to_key))
+                continue;
+
+            // check if this is our address
+            crypto::public_key pk;
+            r = hwd.derive_public_key(derivation, i, spend_pubkey, pk);
+            if (!r)
+                continue;
+
+            // check if temp pubkey matched
+            if (pk != boost::get<txout_to_key>(vo.target).key)
+                continue;
+
+            crypto::secret_key sk = null_skey;
+            hwd.derivation_to_scalar(derivation, i, sk);
+            if (sk == null_skey)
+                continue;
+
+            // we decode the amount
+            rct::key mask;
+            uint8_t type = rv.type;
+            switch (type)
+            {
+            case rct::RCTTypeSimple:
+            case rct::RCTTypeBulletproof:
+            case rct::RCTTypeBulletproof2:
+              amount += rct::decodeRctSimple(rv, rct::sk2rct(sk), static_cast<unsigned int>(i), mask, hwd);
+                break;
+            case rct::RCTTypeFull:
+              amount += rct::decodeRct(rv, rct::sk2rct(sk), static_cast<unsigned int>(i), mask, hwd);
+                break;
+            // This should never happen
+            case rct::RCTTypeNull:
+                amount += vo.amount;
+                break;
+            default:
+              LOG_ERROR("Unsupported rct type: " << type);
+                break;
+            }
+        }
+
+        // we calculate reward rate
+        stake_reward_rate += cryptonote::get_pos_block_reward_rate(tx.unlock_time, tx_block_height, tx_block_time, amount, height, m_nettype);
+    }
+
+    // reward has maximum limit
+    stake_reward_rate = stake_reward_rate > 1.0 ? 1.0 : stake_reward_rate;
+
+    return true;
 }
 
 namespace cryptonote {

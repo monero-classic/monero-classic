@@ -1438,9 +1438,8 @@ PendingTransaction* WalletImpl::restoreMultisigTransaction(const string& signDat
 //    - unconfirmed_transfer_details;
 //    - confirmed_transfer_details)
 
-PendingTransaction *WalletImpl::createTransaction(const string &dst_addr, const string &payment_id, optional<uint64_t> amount, uint32_t mixin_count,
-                                                  PendingTransaction::Priority priority, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices)
-
+PendingTransaction * WalletImpl::createLockTransaction(const std::string &dst_addr, const std::string &payment_id, optional<uint64_t> amount, uint32_t mixin_count,
+                                                   PendingTransaction::Priority priority, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, uint64_t unlock_time)
 {
     clearStatus();
     // Pause refresh thread while creating transaction
@@ -1460,6 +1459,12 @@ PendingTransaction *WalletImpl::createTransaction(const string &dst_addr, const 
     PendingTransactionImpl * transaction = new PendingTransactionImpl(*this);
 
     do {
+        uint64_t daemon_height = daemonBlockChainHeight();
+        if (!daemon_height) {
+            setStatusError(tr("Daemon not synced yet"));
+            break;
+        }
+
         if(!cryptonote::get_account_address_from_str(info, m_wallet->nettype(), dst_addr)) {
             // TODO: copy-paste 'if treating as an address fails, try as url' from simplewallet.cpp:1982
             setStatusError(tr("Invalid destination address"));
@@ -1514,7 +1519,7 @@ PendingTransaction *WalletImpl::createTransaction(const string &dst_addr, const 
                 de.is_subaddress = info.is_subaddress;
                 de.is_integrated = info.has_payment_id;
                 dsts.push_back(de);
-                transaction->m_pending_tx = m_wallet->create_transactions_2(dsts, fake_outs_count, 0 /* unlock_time */,
+                transaction->m_pending_tx = m_wallet->create_transactions_2(dsts, fake_outs_count, unlock_time ? daemon_height + unlock_time : 0,
                                                                           adjusted_priority,
                                                                           extra, subaddr_account, subaddr_indices);
             } else {
@@ -1524,7 +1529,7 @@ PendingTransaction *WalletImpl::createTransaction(const string &dst_addr, const 
                     for (uint32_t index = 0; index < m_wallet->get_num_subaddresses(subaddr_account); ++index)
                         subaddr_indices.insert(index);
                 }
-                transaction->m_pending_tx = m_wallet->create_transactions_all(0, info.address, info.is_subaddress, 1, fake_outs_count, 0 /* unlock_time */,
+                transaction->m_pending_tx = m_wallet->create_transactions_all(0, info.address, info.is_subaddress, 1, fake_outs_count, unlock_time ? daemon_height + unlock_time : 0,
                                                                           adjusted_priority,
                                                                           extra, subaddr_account, subaddr_indices);
             }
@@ -1607,6 +1612,13 @@ PendingTransaction *WalletImpl::createTransaction(const string &dst_addr, const 
     // Resume refresh thread
     startRefresh();
     return transaction;
+}
+
+PendingTransaction *WalletImpl::createTransaction(const string &dst_addr, const string &payment_id, optional<uint64_t> amount, uint32_t mixin_count,
+                                                  PendingTransaction::Priority priority, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices)
+
+{
+    return createLockTransaction(dst_addr, payment_id, amount, mixin_count, priority, subaddr_account, subaddr_indices, 0);
 }
 
 PendingTransaction *WalletImpl::createSweepUnmixableTransaction()
@@ -1693,6 +1705,11 @@ PendingTransaction *WalletImpl::createSweepUnmixableTransaction()
 
     statusWithErrorString(transaction->m_status, transaction->m_errorString);
     return transaction;
+}
+
+uint64_t WalletImpl::reveal_tx_out(const std::string& txid_str)
+{
+    return m_wallet ? m_wallet->reveal_tx_out(txid_str) : 0;
 }
 
 void WalletImpl::disposeTransaction(PendingTransaction *t)

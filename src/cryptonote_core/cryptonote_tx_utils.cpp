@@ -77,13 +77,16 @@ namespace cryptonote
   }
   //---------------------------------------------------------------
 //  bool construct_miner_tx(size_t height, size_t median_weight, uint64_t already_generated_coins, size_t current_block_weight, uint64_t fee, const account_public_address &miner_address, transaction& tx, const blobdata& extra_nonce, size_t max_outs, uint8_t hard_fork_version) {
-    bool construct_miner_tx(size_t height, size_t median_weight, uint64_t already_generated_coins, size_t current_block_weight, uint64_t fee, const account_public_address &miner_address, transaction& tx,  const blobdata& extra_nonce, size_t max_outs, uint8_t hard_fork_version, network_type nettype) {
+    bool construct_miner_tx(size_t height, size_t median_weight, uint64_t already_generated_coins, size_t current_block_weight, uint64_t fee, const account_public_address &miner_address, transaction& tx,  const blobdata& extra_nonce, size_t max_outs, uint8_t hard_fork_version, network_type nettype, const std::vector<char> &extra_stake, double pos_reward_rate) {
     tx.vin.clear();
     tx.vout.clear();
     tx.extra.clear();
 
     keypair txkey = keypair::generate(hw::get_device("default"));
     add_tx_pub_key_to_extra(tx, txkey.pub);
+    if(!extra_stake.empty())
+        if (!add_stake_to_extra(tx.extra, extra_stake))
+            return false;
     if(!extra_nonce.empty())
       if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
         return false;
@@ -102,6 +105,8 @@ namespace cryptonote
       LOG_PRINT_L0("Block is too big");
       return false;
     }
+
+    uint64_t std_reward = block_reward;
 
 #if defined(DEBUG_CREATE_BLOCK_TEMPLATE)
     LOG_PRINT_L1("Creating block template: reward " << block_reward <<
@@ -122,14 +127,17 @@ namespace cryptonote
     bool enable_fund = fundctl.funding_enabled(height);
     uint64_t miner_reward = 0;
     uint64_t fund_reward = 0;
+    uint64_t pos_reward = 0;
     if (enable_fund)
     {
       uint64_t adjust_height = nettype == TESTNET ? DIFFICULTY_ADJUST_HEIGHT_TESTNET : DIFFICULTY_ADJUST_HEIGHT;
       bool fork = height >= adjust_height;
-      fundctl.fund_from_block(block_reward, miner_reward, fund_reward, fork);
-      block_reward = miner_reward;
-      MERROR("construct_miner_tx,block_reward=" << block_reward <<",fund_reward=" << fund_reward << ",height=" << height);
+      fundctl.fund_from_block(std_reward, miner_reward, fund_reward, pos_reward, pos_reward_rate, fork);
+      block_reward = miner_reward + fee;
+      MINFO("construct_miner_tx,block_reward=" << block_reward << ",pos_reward=" << pos_reward <<",fund_reward=" << fund_reward << ",height=" << height);
     }
+
+    block_reward += pos_reward;
 
     std::vector<uint64_t> out_amounts;
     decompose_amount_into_digits(block_reward, hard_fork_version >= 2 ? 0 : ::config::DEFAULT_DUST_THRESHOLD,

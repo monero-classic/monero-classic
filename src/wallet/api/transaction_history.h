@@ -45,6 +45,7 @@ public:
     virtual TransactionInfo * transaction(const std::string &id) const;
     virtual std::vector<TransactionInfo*> getAll() const;
     virtual void refresh();
+    virtual std::vector<TransactionInfo*> getLockedIncoming() const;
 
 private:
 
@@ -52,6 +53,7 @@ private:
     std::vector<TransactionInfo*> m_history;
     WalletImpl *m_wallet;
     mutable boost::shared_mutex   m_historyMutex;
+    std::vector<TransactionInfo*> m_Incomings;
 };
 
 }

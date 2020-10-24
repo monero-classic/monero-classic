@@ -37,6 +37,8 @@
 #define MONERO_ENABLE_FUNDING_HEIGHT_REGTESTNET 10
 #define MONERO_BLOCK_FUNDING_RATE 0.1
 #define MONERO_BLOCK_FUNDING_RATE_NEW 0.7 // from version 60
+#define MONERO_BLOCK_MINER_POW_RATE_NEW 0.1
+#define MONERO_BLOCK_MINER_POS_RATE_NEW 0.2
 
 using namespace cryptonote;
 using namespace std;
@@ -141,21 +143,24 @@ uint64_t BlockFunding::get_funding_enabled_height()
 }
 
 //bool BlockFunding::fund_from_block(uint64_t original_reward, uint64_t& miner_reward, uint64_t& funding)
-bool BlockFunding::fund_from_block(uint64_t original_reward, uint64_t& miner_reward, uint64_t& funding, bool fork)
+bool BlockFunding::fund_from_block(uint64_t original_reward, uint64_t& miner_reward, uint64_t& funding, uint64_t& pos_reward, double pos_reward_rate, bool fork)
 {
     //funding = (uint64_t)(original_reward * MONERO_BLOCK_FUNDING_RATE);
     funding = fork ? (uint64_t)(original_reward * MONERO_BLOCK_FUNDING_RATE_NEW) : (uint64_t)(original_reward * MONERO_BLOCK_FUNDING_RATE);
-    miner_reward = (uint64_t)(original_reward - funding);
+    //miner_reward = (uint64_t)(original_reward - funding);
+    miner_reward = fork ? (uint64_t)(original_reward * MONERO_BLOCK_MINER_POW_RATE_NEW) : (uint64_t)(original_reward - funding);
+    pos_reward = fork ? (uint64_t)(original_reward * MONERO_BLOCK_MINER_POS_RATE_NEW * pos_reward_rate) : 0;
+
     //check
     return true;
 }
 
 //bool BlockFunding::check_block_funding(uint64_t actual_miner_reward, uint64_t actual_funding, uint64_t real_reward)
-bool BlockFunding::check_block_funding(uint64_t actual_miner_reward, uint64_t actual_funding, uint64_t real_reward, bool fork)
+bool BlockFunding::check_block_funding(uint64_t actual_miner_reward, uint64_t actual_funding, uint64_t std_reward, double stake_reward_rate, bool fork)
 {
-    uint64_t real_miner_reward, real_funding;
-    fund_from_block(real_reward, real_miner_reward, real_funding, fork);
-    return (actual_miner_reward == real_miner_reward) && (actual_funding == real_funding);
+    uint64_t real_miner_reward, real_funding, real_stake_reward;
+    fund_from_block(std_reward, real_miner_reward, real_funding, real_stake_reward, stake_reward_rate, fork);
+    return (actual_miner_reward == real_miner_reward + real_stake_reward) && (actual_funding == real_funding);
 }
 
 bool BlockFunding::get_funding_from_miner_tx(const transaction& miner_tx, uint64_t& funding_amount)

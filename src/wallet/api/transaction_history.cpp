@@ -40,6 +40,8 @@
 #include <string>
 #include <list>
 
+#define MONERO_STAKE_MIN_HEIGHT 720
+
 using namespace epee;
 
 namespace Monero {
@@ -92,6 +94,12 @@ std::vector<TransactionInfo *> TransactionHistoryImpl::getAll() const
     return m_history;
 }
 
+std::vector<TransactionInfo*> TransactionHistoryImpl::getLockedIncoming() const
+{
+    boost::shared_lock<boost::shared_mutex> lock(m_historyMutex);
+    return m_Incomings;
+}
+
 void TransactionHistoryImpl::refresh()
 {
     // multithreaded access:
@@ -108,6 +116,7 @@ void TransactionHistoryImpl::refresh()
     for (auto t : m_history)
         delete t;
     m_history.clear();
+    m_Incomings.clear();
 
     // transactions are stored in wallet2:
     // - confirmed_transfer_details   - out transfers
@@ -136,8 +145,13 @@ void TransactionHistoryImpl::refresh()
         ti->m_timestamp = pd.m_timestamp;
         ti->m_confirmations = (wallet_height > pd.m_block_height) ? wallet_height - pd.m_block_height : 0;
         ti->m_unlock_time = pd.m_unlock_time;
+        ti->m_coinbase = pd.m_coinbase;
         m_history.push_back(ti);
 
+        if (!pd.m_coinbase &&
+            (pd.m_unlock_time >= pd.m_block_height + MONERO_STAKE_MIN_HEIGHT) &&
+            pd.m_unlock_time > wallet_height)
+            m_Incomings.push_back(ti);
     }
 
     // confirmed output transactions
@@ -177,12 +191,19 @@ void TransactionHistoryImpl::refresh()
         ti->m_label = pd.m_subaddr_indices.size() == 1 ? m_wallet->m_wallet->get_subaddress_label({pd.m_subaddr_account, *pd.m_subaddr_indices.begin()}) : "";
         ti->m_timestamp = pd.m_timestamp;
         ti->m_confirmations = (wallet_height > pd.m_block_height) ? wallet_height - pd.m_block_height : 0;
+        ti->m_coinbase = false;
+        ti->m_unlock_time = pd.m_unlock_time;
 
         // single output transaction might contain multiple transfers
         for (const auto &d: pd.m_dests) {
             ti->m_transfers.push_back({d.amount, get_account_address_as_str(m_wallet->m_wallet->nettype(), d.is_subaddress, d.addr)});
         }
         m_history.push_back(ti);
+
+        if (m_wallet->m_wallet->is_dst_address_self(pd) &&
+            (pd.m_unlock_time >= pd.m_block_height + MONERO_STAKE_MIN_HEIGHT) &&
+            pd.m_unlock_time > wallet_height)
+            m_Incomings.push_back(ti);
     }
 
     // unconfirmed output transactions
@@ -211,6 +232,7 @@ void TransactionHistoryImpl::refresh()
         ti->m_label = pd.m_subaddr_indices.size() == 1 ? m_wallet->m_wallet->get_subaddress_label({pd.m_subaddr_account, *pd.m_subaddr_indices.begin()}) : "";
         ti->m_timestamp = pd.m_timestamp;
         ti->m_confirmations = 0;
+        ti->m_coinbase = false;
         m_history.push_back(ti);
     }
     
@@ -235,6 +257,7 @@ void TransactionHistoryImpl::refresh()
         ti->m_label     = m_wallet->m_wallet->get_subaddress_label(pd.m_subaddr_index);
         ti->m_timestamp = pd.m_timestamp;
         ti->m_confirmations = 0;
+        ti->m_coinbase = pd.m_coinbase;
         m_history.push_back(ti);
         
         LOG_PRINT_L1(__FUNCTION__ << ": Unconfirmed payment found " << pd.m_amount);

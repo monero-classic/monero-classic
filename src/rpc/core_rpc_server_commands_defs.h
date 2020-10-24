@@ -941,11 +941,15 @@ namespace cryptonote
       uint64_t reserve_size;       //max 255 bytes
       std::string wallet_address;
       std::string prev_block;
+      std::string view_secret_key;
+      std::vector<std::string> tx_id;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(reserve_size)
         KV_SERIALIZE(wallet_address)
         KV_SERIALIZE(prev_block)
+        KV_SERIALIZE(view_secret_key)
+        KV_SERIALIZE(tx_id)
       END_KV_SERIALIZE_MAP()
     };
     typedef epee::misc_utils::struct_init<request_t> request;

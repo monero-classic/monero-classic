@@ -594,6 +594,7 @@ namespace cryptonote
     if (!pick<tx_extra_merge_mining_tag>(nar, tx_extra_fields, TX_EXTRA_MERGE_MINING_TAG)) return false;
     if (!pick<tx_extra_mysterious_minergate>(nar, tx_extra_fields, TX_EXTRA_MYSTERIOUS_MINERGATE_TAG)) return false;
     if (!pick<tx_extra_padding>(nar, tx_extra_fields, TX_EXTRA_TAG_PADDING)) return false;
+    if (!pick<tx_extra_stake>(nar, tx_extra_fields, TX_EXTRA_TAG_STAKE)) return  false;
 
     // if not empty, someone added a new type and did not add a case above
     if (!tx_extra_fields.empty())
@@ -766,6 +767,73 @@ namespace cryptonote
     if (TX_EXTRA_NONCE_ENCRYPTED_PAYMENT_ID != extra_nonce[0])
       return false;
     payment_id = *reinterpret_cast<const crypto::hash8*>(extra_nonce.data() + 1);
+    return true;
+  }
+  //---------------------------------------------------------------
+  bool get_tx_stake_from_extra(crypto::public_key& spend_pub_key, crypto::secret_key& view_secret_key, std::vector<crypto::hash>& tx_ids, const std::vector<char>& extra_stake)
+  {
+    const size_t HASH_SIZE = sizeof(crypto::hash); // public_key, secret_key, hash has same size
+    if (extra_stake.size() % HASH_SIZE != 0 || extra_stake.size() < HASH_SIZE * 3)
+        return false;
+
+    std::copy(extra_stake.data(), extra_stake.data() + HASH_SIZE, spend_pub_key.data);
+
+    std::copy(extra_stake.data() + HASH_SIZE, extra_stake.data() + 2 * HASH_SIZE, view_secret_key.data);
+
+    size_t cnt = extra_stake.size() /  HASH_SIZE - 2;
+    for (size_t i = 0; i < cnt; ++i)
+    {
+        crypto::hash id;
+        std::copy(extra_stake.data() + HASH_SIZE  * (2 + i), extra_stake.data() + HASH_SIZE * (3 + i), id.data);
+        tx_ids.push_back(id);
+    }
+    return true;
+  }
+  //---------------------------------------------------------------
+  bool get_tx_stake_from_extra(crypto::public_key& spend_pub_key, crypto::secret_key& view_secret_key, std::vector<crypto::hash>& tx_ids, const std::vector<uint8_t> &tx_extra, size_t stk_index)
+  {
+    std::vector<tx_extra_field> tx_extra_fields;
+    parse_tx_extra(tx_extra, tx_extra_fields);
+
+    tx_extra_stake stake_field;
+    if(!find_tx_extra_field_by_type(tx_extra_fields, stake_field, stk_index))
+        return false;
+
+    spend_pub_key = stake_field.spend_pub_key;
+    view_secret_key = stake_field.view_secret_key;
+    tx_ids = stake_field.tx_id;
+
+    return true;
+  }
+  //---------------------------------------------------------------
+  bool add_stake_to_extra(std::vector<uint8_t>& tx_extra, const std::vector<char> &extra_stake)
+  {
+    crypto::public_key spk = AUTO_VAL_INIT(spk);
+    crypto::secret_key vsk = AUTO_VAL_INIT(vsk);
+    std::vector<crypto::hash> ti = AUTO_VAL_INIT(ti);
+
+    if (!get_tx_stake_from_extra(spk, vsk, ti, extra_stake))
+        return false;
+
+    // parse stake
+    tx_extra_stake stake;
+    stake.spend_pub_key = spk;
+    stake.view_secret_key = vsk;
+    stake.tx_id = ti;
+    stake.count = static_cast<uint8_t>(ti.size());
+
+    // convert to variant
+    tx_extra_field field = stake;
+    // serialize
+    std::ostringstream oss;
+    binary_archive<true> ar(oss);
+    bool r = ::do_serialize(ar, field);
+    CHECK_AND_NO_ASSERT_MES_L1(r, false, "failed to serialize tx extra stake");
+    // append
+    std::string tx_extra_str = oss.str();
+    size_t pos = tx_extra.size();
+    tx_extra.resize(tx_extra.size() + tx_extra_str.size());
+    memcpy(&tx_extra[pos], tx_extra_str.data(), tx_extra_str.size());
     return true;
   }
   //---------------------------------------------------------------

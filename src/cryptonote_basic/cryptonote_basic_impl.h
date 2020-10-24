@@ -91,6 +91,7 @@ namespace cryptonote {
   bool get_block_reward(size_t median_weight, size_t current_block_weight, uint64_t already_generated_coins, uint64_t &reward, uint8_t version);
   uint8_t get_account_address_checksum(const public_address_outer_blob& bl);
   uint8_t get_account_integrated_address_checksum(const public_integrated_address_outer_blob& bl);
+  double get_pos_block_reward_rate(uint64_t unlock_time,  uint64_t block_height, uint64_t block_time, uint64_t staked_coins, uint64_t cur_height, network_type type);
 
   std::string get_account_address_as_str(
       network_type nettype

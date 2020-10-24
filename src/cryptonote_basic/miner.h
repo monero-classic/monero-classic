@@ -47,7 +47,7 @@ namespace cryptonote
   struct i_miner_handler
   {
     virtual bool handle_block_found(block& b, block_verification_context &bvc) = 0;
-    virtual bool get_block_template(block& b, const account_public_address& adr, difficulty_type& diffic, uint64_t& height, uint64_t& expected_reward, const blobdata& ex_nonce) = 0;
+    virtual bool get_block_template(block& b, const account_public_address& adr, difficulty_type& diffic, uint64_t& height, uint64_t& expected_reward, const blobdata& ex_nonce, const std::vector<char>& ex_stake) = 0;
   protected:
     ~i_miner_handler(){};
   };
@@ -106,6 +106,7 @@ namespace cryptonote
     bool request_block_template();
     void  merge_hr();
     void  update_autodetection();
+    bool load_pos_settings(const std::string& filename);
     
     struct miner_config
     {
@@ -116,6 +117,11 @@ namespace cryptonote
       END_KV_SERIALIZE_MAP()
     };
 
+    struct pos_config
+    {
+        crypto::secret_key   view_secret_key;
+        std::vector<crypto::hash> tx_id;
+    };
 
     volatile uint32_t m_stop;
     epee::critical_section m_template_lock;
@@ -173,5 +179,11 @@ namespace cryptonote
     static uint8_t get_percent_of_total(uint64_t some_time, uint64_t total_time);
     static boost::logic::tribool on_battery_power();
     std::atomic<uint64_t> m_block_reward;
+
+    // pos mining stuffs ..
+
+    pos_config m_pos_settings;
+    std::string m_pos_settings_file;
+    time_t  m_modify_time;
   };
 }

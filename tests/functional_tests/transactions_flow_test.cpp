@@ -270,7 +270,7 @@ bool transactions_flow_test(std::string& working_folder,
     misc_utils::sleep_no_w(DIFFICULTY_BLOCKS_ESTIMATE_TIMESPAN*1000);//wait two blocks before sync on another wallet on another daemon
   }
 
-  uint64_t money_2 = w2.balance(0);
+  uint64_t money_2 = w2.balance(0).template convert_to<uint64_t>();
   if(money_2 == transfered_money)
   {
     MGINFO_GREEN("-----------------------FINISHING TRANSACTIONS FLOW TEST OK-----------------------");

@@ -198,6 +198,7 @@ struct TransactionInfo
     virtual std::string paymentId() const = 0;
     //! only applicable for output transactions
     virtual const std::vector<Transfer> & transfers() const = 0;
+    virtual bool isCoinbase() const = 0;
 };
 /**
  * @brief The TransactionHistory - interface for displaying transaction history
@@ -210,6 +211,7 @@ struct TransactionHistory
     virtual TransactionInfo * transaction(const std::string &id) const = 0;
     virtual std::vector<TransactionInfo*> getAll() const = 0;
     virtual void refresh() = 0;
+    virtual std::vector<TransactionInfo*> getLockedIncoming() const = 0;
 };
 
 /**
@@ -1014,6 +1016,15 @@ struct Wallet
 
     //! cold-device protocol key image sync
     virtual uint64_t coldKeyImageSync(uint64_t &spent, uint64_t &unspent) = 0;
+
+    virtual PendingTransaction * createLockTransaction(const std::string &dst_addr, const std::string &payment_id,
+                                                   optional<uint64_t> amount, uint32_t mixin_count,
+                                                   PendingTransaction::Priority priority = PendingTransaction::Priority_Low,
+                                                   uint32_t subaddr_account = 0,
+                                                   std::set<uint32_t> subaddr_indices = {},
+                                                   uint64_t unlock_time = 0) = 0;
+
+    virtual uint64_t reveal_tx_out(const std::string& txid) = 0;
 };
 
 /**

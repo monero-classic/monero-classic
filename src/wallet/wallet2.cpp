@@ -10991,6 +10991,88 @@ std::string wallet2::get_tx_proof(const cryptonote::transaction &tx, const crypt
   return sig_str;
 }
 
+bool wallet2::get_tx_by_id(const crypto::hash &txid, cryptonote::transaction &tx)
+{
+  // fetch tx pubkey from the daemon
+  COMMAND_RPC_GET_TRANSACTIONS::request req;
+  COMMAND_RPC_GET_TRANSACTIONS::response res;
+  req.txs_hashes.push_back(epee::string_tools::pod_to_hex(txid));
+  req.decode_as_json = false;
+  req.prune = true;
+  m_daemon_rpc_mutex.lock();
+  bool ok = invoke_http_json("/gettransactions", req, res, rpc_timeout);
+  m_daemon_rpc_mutex.unlock();
+
+  //Failed to get transaction from daemon
+  if (!ok || (res.txs.size() != 1 && res.txs_as_hex.size() != 1)) return false;
+
+  crypto::hash tx_hash;
+  if (res.txs.size() == 1)
+  {
+    ok = get_pruned_tx(res.txs.front(), tx, tx_hash);
+    if (!ok) return false;
+  }
+  else
+  {
+    cryptonote::blobdata tx_data;
+    ok = string_tools::parse_hexstr_to_binbuff(res.txs_as_hex.front(), tx_data);
+    if (!ok) return false;
+    ok = cryptonote::parse_and_validate_tx_from_blob(tx_data, tx);
+    if (!ok) return false;
+    tx_hash = cryptonote::get_transaction_hash(tx);
+  }
+
+  if (tx_hash != txid) return false;
+
+  return true;
+}
+
+uint64_t wallet2::reveal_tx_out(const std::string& txid_str)
+{
+  uint64_t amount = 0;
+
+  crypto::hash txid;
+  if (!epee::string_tools::hex_to_pod(txid_str, txid))
+  {
+      return amount;
+  }
+
+  cryptonote::transaction tx;
+  if (!get_tx_by_id(txid, tx))
+      return amount;
+
+  const crypto::public_key tx_pub_key = get_tx_pub_key_from_extra(tx);
+  if (tx_pub_key == null_pkey)
+      return amount;
+
+  crypto::key_derivation derivation;
+  const crypto::secret_key& a = m_account.get_keys().m_view_secret_key;
+  hw::device &hwd = m_account.get_device();
+  bool r = hwd.generate_key_derivation(tx_pub_key, a, derivation);
+  if (!r)
+      return amount;
+
+  // scan all output, calculate amount
+  for(size_t i = 0; i < tx.vout.size(); ++i)
+  {
+    const cryptonote::tx_out& vo = tx.vout[i];
+    // check if this is our address
+    crypto::public_key pk;
+    r = hwd.derive_public_key(derivation, i, m_account.get_keys().m_account_address.m_spend_public_key, pk);
+    if (!r)
+        continue;
+
+    // check if temp pubkey matched
+    if (pk != boost::get<txout_to_key>(vo.target).key)
+        continue;
+
+    rct::key mask;
+    amount += decodeRct(tx.rct_signatures, derivation, i, mask, hwd);
+  }
+
+  return amount;
+}
+
 bool wallet2::check_tx_proof(const crypto::hash &txid, const cryptonote::account_public_address &address, bool is_subaddress, const std::string &message, const std::string &sig_str, uint64_t &received, bool &in_pool, uint64_t &confirmations)
 {
   // fetch tx pubkey from the daemon

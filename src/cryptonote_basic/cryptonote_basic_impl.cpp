@@ -46,6 +46,26 @@ using namespace epee;
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "cn"
 
+#define ARRAY_SIZE(a) sizeof(a) / sizeof(a[0])
+
+const uint64_t BLOCK_PER_YEAR = 259200;
+
+const uint64_t FULL_STAKE_COINS_OVER_YEAR[13] = {
+    300000,
+    600000,
+    900000,
+    1350000,             // 1.5
+    2025000,             // 1.5
+    2632500,             // 1.3
+    3422250,             // 1.3
+    4448925,             // 1.3
+    5338710,             // 1.2
+    6406452,             // 1.2
+    7687742,             // 1.2
+    9225290,             // 1.2
+    10000000,            // 1.2, XNC_INT_MAX is 10000000 * COIN, so this will hardly happen
+};
+
 namespace cryptonote {
 
   struct integrated_address {
@@ -318,8 +338,64 @@ namespace cryptonote {
   }
 
   bool operator ==(const cryptonote::block& a, const cryptonote::block& b) {
-    return cryptonote::get_block_hash(a) == cryptonote::get_block_hash(b);
+      return cryptonote::get_block_hash(a) == cryptonote::get_block_hash(b);
   }
+  //--------------------------------------------------------------------------------
+  double get_pos_block_reward_rate(uint64_t unlock_time, uint64_t block_height, uint64_t block_time, uint64_t staked_coins, uint64_t cur_height, network_type type)
+  {
+      double reward_rate = 0.0;
+
+      // at least staked 1 XMC
+      staked_coins /= COIN;
+      if (!staked_coins)
+          return reward_rate;
+
+      uint64_t start_height = (type == network_type::TESTNET ? STAKE_STATR_HEIGHT_TESTNET : STAKE_START_HEIGHT);
+
+      if (cur_height < start_height)
+          return reward_rate;
+
+      uint64_t full_stake_coins = FULL_STAKE_COINS_OVER_YEAR[0];   // 300'000 XMC
+      uint64_t elapse_index = (cur_height - start_height) / BLOCK_PER_YEAR;
+      if (elapse_index >= ARRAY_SIZE(FULL_STAKE_COINS_OVER_YEAR))
+          full_stake_coins = FULL_STAKE_COINS_OVER_YEAR[ARRAY_SIZE(FULL_STAKE_COINS_OVER_YEAR) - 1];
+      else
+          full_stake_coins = FULL_STAKE_COINS_OVER_YEAR[elapse_index];
+
+      const uint64_t FULL_STAKE_TIME_DAYS = 12 * 30; // one year
+
+      do
+      {
+          uint64_t delta_height = 0;
+          if (unlock_time < CRYPTONOTE_MAX_BLOCK_NUMBER){
+              if (unlock_time < block_height)
+                  break;
+
+              delta_height = unlock_time - block_height;
+          } else {
+              if (unlock_time < block_time)
+                  break;
+
+              delta_height = (unlock_time - block_time) / DIFFICULTY_TARGET_V2;
+          }
+
+          if (delta_height > BLOCK_PER_YEAR)
+              delta_height = BLOCK_PER_YEAR;
+
+          // at least staked one day
+          uint64_t delta_days = delta_height / MONERO_BLOCK_PER_DAY;
+          if (!delta_days)
+              break;
+
+          // This could make uint64_t overflow
+          //reward_rate = 1.0 * (staked_coins * delta_days * delta_days) / (full_stake_coins * FULL_STAKE_TIME_DAYS * FULL_STAKE_TIME_DAYS);
+          reward_rate = 1.0 * staked_coins / full_stake_coins * delta_days / FULL_STAKE_TIME_DAYS * delta_days / FULL_STAKE_TIME_DAYS;
+
+      }while (0);
+
+      return reward_rate;
+  }
+  //--------------------------------------------------------------------------------
 }
 
 //--------------------------------------------------------------------------------

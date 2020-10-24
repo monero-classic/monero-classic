@@ -346,8 +346,8 @@ namespace cryptonote
      *
      * @return true if block template filled in successfully, else false
      */
-    bool create_block_template(block& b, const account_public_address& miner_address, difficulty_type& di, uint64_t& height, uint64_t& expected_reward, const blobdata& ex_nonce);
-    bool create_block_template(block& b, const crypto::hash *from_block, const account_public_address& miner_address, difficulty_type& di, uint64_t& height, uint64_t& expected_reward, const blobdata& ex_nonce);
+    bool create_block_template(block& b, const account_public_address& miner_address, difficulty_type& di, uint64_t& height, uint64_t& expected_reward, const blobdata& ex_nonce, const std::vector<char>& ex_stake);
+    bool create_block_template(block& b, const crypto::hash *from_block, const account_public_address& miner_address, difficulty_type& di, uint64_t& height, uint64_t& expected_reward, const blobdata& ex_nonce, const std::vector<char>& ex_stake);
 
     /**
      * @brief checks if a block is known about with a given hash
@@ -1488,5 +1488,15 @@ namespace cryptonote
      * At some point, may be used to push an update to miners
      */
     void cache_block_template(const block &b, const cryptonote::account_public_address &address, const blobdata &nonce, const difficulty_type &diff, uint64_t height, uint64_t expected_reward, uint64_t pool_cookie);
+
+	/**
+	 * @brief check miner stake
+	 *
+     * spend_pubkey is miner's public spend key
+	 * stake's view secret key must match miner's view public key
+	 * stake's every tx must be miner's
+	 * stake_reward is the reward of stake
+	 */
+    bool check_miner_stakes(const crypto::public_key& spend_pubkey, const crypto::secret_key& view_seckey, const std::vector<crypto::hash>& ti, uint64_t height, double& stake_reward_rate);
   };
 }  // namespace cryptonote

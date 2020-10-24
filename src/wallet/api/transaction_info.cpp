@@ -138,6 +138,11 @@ uint64_t TransactionInfoImpl::unlockTime() const
     return m_unlock_time;
 }
 
+bool TransactionInfoImpl::isCoinbase() const
+{
+    return (m_direction == Direction_In) && m_coinbase;
+}
+
 } // namespace
 
 namespace Bitmonero = Monero;

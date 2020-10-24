@@ -204,6 +204,13 @@ public:
     virtual bool unlockKeysFile() override;
     virtual bool isKeysFileLocked() override;
     virtual uint64_t coldKeyImageSync(uint64_t &spent, uint64_t &unspent) override;
+    virtual PendingTransaction * createLockTransaction(const std::string &dst_addr, const std::string &payment_id,
+                                                   optional<uint64_t> amount, uint32_t mixin_count,
+                                                   PendingTransaction::Priority priority = PendingTransaction::Priority_Low,
+                                                   uint32_t subaddr_account = 0,
+                                                   std::set<uint32_t> subaddr_indices = {},
+                                                   uint64_t unlock_time = 0) override;
+    virtual uint64_t reveal_tx_out(const std::string& txid) override;
 
 private:
     void clearStatus() const;

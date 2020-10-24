@@ -46,10 +46,10 @@ namespace cryptonote{
             bool init(const network_type nettype = MAINNET);
             bool funding_enabled(uint64_t height);
 //            bool check_block_funding(uint64_t actual_miner_reward, uint64_t actual_funding, uint64_t real_reward);
-            bool check_block_funding(uint64_t actual_miner_reward, uint64_t actual_funding, uint64_t real_reward, bool fork);
+            bool check_block_funding(uint64_t actual_miner_reward, uint64_t actual_funding, uint64_t std_reward, double stake_reward_rate, bool fork);
             bool get_funding_from_miner_tx(const transaction& miner_tx, uint64_t& funding_amount);
 //            bool fund_from_block(uint64_t original_reward, uint64_t& miner_reward, uint64_t& funding);
-            bool fund_from_block(uint64_t original_reward, uint64_t& miner_reward, uint64_t& funding, bool fork);
+            bool fund_from_block(uint64_t original_reward, uint64_t& miner_reward, uint64_t& funding, uint64_t& pos_reward, double pos_reward_rate, bool fork);
             uint64_t get_funding_enabled_height();
             account_public_address& public_address();
         private:

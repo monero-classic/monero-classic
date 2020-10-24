@@ -776,6 +776,18 @@ private:
     void set_subaddress_label(const cryptonote::subaddress_index &index, const std::string &label);
     void set_subaddress_lookahead(size_t major, size_t minor);
     std::pair<size_t, size_t> get_subaddress_lookahead() const { return {m_subaddress_lookahead_major, m_subaddress_lookahead_minor}; }
+    bool is_dst_address_self(const confirmed_transfer_details& ctd) {
+      bool found = true;
+        for (const auto& dst : ctd.m_dests) {
+            auto subaddr_index = m_subaddresses.find(dst.addr.m_spend_public_key);
+            if (subaddr_index != m_subaddresses.end() && subaddr_index->second.major != ctd.m_subaddr_account)
+            {
+                found = false;
+                break;
+            }
+        }
+        return found;
+    };
     /*!
      * \brief Tells if the wallet file is deprecated.
      */
@@ -1074,6 +1086,8 @@ private:
     bool check_tx_proof(const crypto::hash &txid, const cryptonote::account_public_address &address, bool is_subaddress, const std::string &message, const std::string &sig_str, uint64_t &received, bool &in_pool, uint64_t &confirmations);
     bool check_tx_proof(const cryptonote::transaction &tx, const cryptonote::account_public_address &address, bool is_subaddress, const std::string &message, const std::string &sig_str, uint64_t &received) const;
 
+    bool get_tx_by_id(const crypto::hash &txid, cryptonote::transaction &tx);
+    uint64_t reveal_tx_out(const std::string& txid_str);
     std::string get_spend_proof(const crypto::hash &txid, const std::string &message);
     bool check_spend_proof(const crypto::hash &txid, const std::string &message, const std::string &sig_str);
 
