@@ -27,6 +27,7 @@
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "gtest/gtest.h"
+#include "cryptonote_config.h"
 #include "cryptonote_basic/difficulty.h"
 
 static cryptonote::difficulty_type MKDIFF(uint64_t high, uint64_t low)
