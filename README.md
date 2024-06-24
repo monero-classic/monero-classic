@@ -1,4 +1,5 @@
-# Monero-Classic
+#
+ Monero-Classic
 
 Copyright (c) 2014-2019 The Monero-Classic Project.
 Portions Copyright (c) 2012-2013 The monero-classic developers.
@@ -18,7 +19,7 @@ Portions Copyright (c) 2012-2013 The monero-classic developers.
   - [Contributing](#contributing)
   - [Scheduled software upgrades](#scheduled-software-upgrades)
   - [Release staging schedule and protocol](#release-staging-schedule-and-protocol)
-  - [Compiling Monero-Classic from source](#compiling-monero-classic-from-source)
+  - [Compiling monero-Classic from source](#compiling-monero-classic-from-source)
     - [Dependencies](#dependencies)
   - [Internationalization](#Internationalization)
   - [Using Tor](#using-tor)
@@ -29,7 +30,7 @@ Portions Copyright (c) 2012-2013 The monero-classic developers.
 
 - Web: [monero-classic.org](http://monero-classic.org)
 - Mail: [dev@monero-classic.org](mailto:dev@monero-classic.org)
-- GitHub: [https://github.com/monero-classic/monero](https://github.com/monero-classic/monero)
+- GitHub: [https://github.com/monero-classic/monero-classic](https://github.com/monero-classic/monero-classic)
 
 ## Social Media
 
@@ -204,11 +205,11 @@ FreeBSD one liner for required to build dependencies
 
 Clone recursively to pull-in needed submodule(s):
 
-`$ git clone --recursive https://github.com/monero-classic/monero`
+`$ git clone --recursive https://github.com/monero-classic/monero-classic`
 
 If you already have a repo cloned, initialize and update:
 
-`$ cd monero && git submodule init && git submodule update`
+`$ cd monero-classic && git submodule init && git submodule update`
 
 ### Build instructions
 
@@ -221,7 +222,7 @@ invokes cmake commands as needed.
 * Change to the root of the source code directory, change to the most recent release branch, and build:
 
     ```bash
-    cd monero
+    cd monero-classic
     git checkout master
     make
     ```
@@ -242,7 +243,7 @@ invokes cmake commands as needed.
 
 * The resulting executables can be found in `build/release/bin`
 
-* Add `PATH="$PATH:$HOME/monero/build/release/bin"` to `.profile`
+* Add `PATH="$PATH:$HOME/monero-classic/build/release/bin"` to `.profile`
 
 * Run Monero-Classic with `moneroclassicd --detach`
 
@@ -296,8 +297,8 @@ Tested on a Raspberry Pi Zero with a clean install of minimal Raspbian Stretch (
 * Clone monero-classic and checkout the most recent release version:
 
     ```bash
-    git clone https://github.com/monero-classic/monero.git
-    cd monero
+    git clone https://github.com/monero-classic/monero-classic.git
+    cd monero-classic
     git checkout tags/v0.14.1.2
     ```
 
@@ -311,7 +312,7 @@ Tested on a Raspberry Pi Zero with a clean install of minimal Raspbian Stretch (
 
 * The resulting executables can be found in `build/release/bin`
 
-* Add `PATH="$PATH:$HOME/monero/build/release/bin"` to `.profile`
+* Add `PATH="$PATH:$HOME/monero-classic/build/release/bin"` to `.profile`
 
 * Run Monero-Classic with `moneroclassicd --detach`
 
@@ -404,7 +405,7 @@ application.
 * To git clone, run:
 
     ```bash
-    git clone --recursive https://github.com/monero-classic/monero.git
+    git clone --recursive https://github.com/monero-classic/monero-classic.git
     ```
 
 **Building**
@@ -412,10 +413,10 @@ application.
 * Change to the cloned directory, run:
 
     ```bash
-    cd monero
+    cd monero-classic
     ```
 
-* If you would like a specific [version/tag](https://github.com/monero-classic/monero/tags), do a git checkout for that version. eg. 'v0.14.1.2'. If you don't care about the version and just want binaries from master, skip this step:
+* If you would like a specific [version/tag](https://github.com/monero-classic/monero-classic/tags), do a git checkout for that version. eg. 'v0.14.1.2'. If you don't care about the version and just want binaries from master, skip this step:
 
     ```bash
     git checkout v0.14.1.2
@@ -546,7 +547,7 @@ Packages are available for
 * Debian Bullseye and Sid
 
     ```bash
-    sudo apt install monero
+    sudo apt install monero-classic
     ```
 More info and versions in the [Debian package tracker](https://tracker.debian.org/pkg/monero).
 
