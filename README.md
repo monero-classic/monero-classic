@@ -34,9 +34,8 @@ Portions Copyright (c) 2012-2013 The monero-classic developers.
 ## Social Media
 
 - Twitter:[https://twitter.com/xmccurrency](https://twitter.com/xmccurrency)
-- Telegram Group:[https://t.me/xmccurrency](https://t.me/xmccurrency)
+- Telegram Group:[https://t.me/monero_classic](https://t.me/monero_classic)
 - Bitcointalk:[https://bitcointalk.org/index.php?topic=3256439.msg33919963#msg33919963](https://bitcointalk.org/index.php?topic=3256439.msg33919963#msg33919963)
-- QQ Group: Group One:700807911 Group Two:547278715
 
 
 ## Vulnerability response
