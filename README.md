@@ -28,9 +28,9 @@ Portions Copyright (c) 2012-2013 The monero-classic developers.
 
 ## Development resources
 
-- Web: [monero-classic.org](http://monero-classic.org)
+- Website: [monero-classic.org](https://monero-classic.org)
 - Mail: [dev@monero-classic.org](mailto:dev@monero-classic.org)
-- GitHub: [https://github.com/monero-classic/monero-classic](https://github.com/monero-classic/monero-classic)
+- GitHub: [https://github.com/monero-classic/monero-classic-v1](https://github.com/monero-classic/monero-classic-v1)
 
 ## Social Media
 
@@ -75,13 +75,13 @@ These builds are of the master branch, which is used for active development and 
 
 Monero-Classic is a private, secure, untraceable, decentralised digital currency. You are your bank, you control your funds, and nobody can trace your transfers unless you allow them to do so.
 
-**Privacy:** Monero uses a cryptographically sound system to allow you to send and receive funds without your transactions being easily revealed on the blockchain (the ledger of transactions that everyone has). This ensures that your purchases, receipts, and all transfers remain absolutely private by default.
+**Privacy:** Monero-Classic uses a cryptographically sound system to allow you to send and receive funds without your transactions being easily revealed on the blockchain (the ledger of transactions that everyone has). This ensures that your purchases, receipts, and all transfers remain absolutely private by default.
 
 **Security:** Using the power of a distributed peer-to-peer consensus network, every transaction on the network is cryptographically secured. Individual wallets have a 25 word mnemonic seed that is only displayed once, and can be written down to backup the wallet. Wallet files are encrypted with a passphrase to ensure they are useless if stolen.
 
-**Untraceability:** By taking advantage of ring signatures, a special property of a certain type of cryptography, Monero is able to ensure that transactions are not only untraceable, but have an optional measure of ambiguity that ensures that transactions cannot easily be tied back to an individual user or computer.
+**Untraceability:** By taking advantage of ring signatures, a special property of a certain type of cryptography, Monero-Classic is able to ensure that transactions are not only untraceable, but have an optional measure of ambiguity that ensures that transactions cannot easily be tied back to an individual user or computer.
 
-**Decentralization:** The utility of monero-classic depends on its decentralised peer-to-peer consensus network - anyone should be able to run the monero-classic software, validate the integrity of the blockchain, and participate in all aspects of the monero-classic network using consumer-grade commodity hardware. Decentralization of the monero-classic network is maintained by software development that minimizes the costs of running the monero-classic software and inhibits the proliferation of specialized, non-commodity hardware.
+**Decentralization:** The utility of Monero-Classic depends on its decentralised peer-to-peer consensus network - anyone should be able to run the Monero-Classic software, validate the integrity of the blockchain, and participate in all aspects of the Monero-Classic network using consumer-grade commodity hardware. Decentralization of the Monero-Classic network is maintained by software development that minimizes the costs of running the Monero-Classic software and inhibits the proliferation of specialized, non-commodity hardware.
 
 ## About this project
 
@@ -93,9 +93,9 @@ As with many development projects, the repository on Github is considered to be 
 
 ## Supporting the project
 
-If you want to join our efforts, the easiest thing you can do is support the project financially. Both Monero-Classic and Bitcoin donations can be made to **donate.getmonero.org** if using a client that supports the [OpenAlias](https://openalias.org) standard. Alternatively you can send XMR to the Monero-Classic donation address via the `donate` command (type `help` in the command-line wallet for details).
+If you want to join our efforts, the easiest thing you can do is support the project financially. Both Monero-Classic and Bitcoin donations can be made to **donate.monero-classic.org** if using a client that supports the [OpenAlias](https://openalias.org) standard. Alternatively you can send XMC to the Monero-Classic donation address via the `donate` command (type `help` in the command-line wallet for details).
 
-The Monero donation address is: `44AFFq5kSiGBoZ4NMDwYtN18obc8AemS33DBLWs3H7otXft3XjrpDtQGv7SqSsaBYBb98uNbr2VBBEt7f2wfn3RVGQBEP3A` (viewkey: `f359631075708155cc3d92a32b75a7d02a5dcf27756707b47a2b31b21c389501`)
+The Monero-Classic donation address is: `44AFFq5kSiGBoZ4NMDwYtN18obc8AemS33DBLWs3H7otXft3XjrpDtQGv7SqSsaBYBb98uNbr2VBBEt7f2wfn3RVGQBEP3A` (viewkey: `f359631075708155cc3d92a32b75a7d02a5dcf27756707b47a2b31b21c389501`)
 
 The Bitcoin donation address is: `1KTexdemPdxSBcG55heUuTjDRYqbC5ZL8H`
 
