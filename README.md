@@ -1,4 +1,5 @@
-# Monero-Classic
+#
+ Monero-Classic
 
 Copyright (c) 2014-2019 The Monero-Classic Project.
 Portions Copyright (c) 2012-2013 The monero-classic developers.
@@ -18,7 +19,7 @@ Portions Copyright (c) 2012-2013 The monero-classic developers.
   - [Contributing](#contributing)
   - [Scheduled software upgrades](#scheduled-software-upgrades)
   - [Release staging schedule and protocol](#release-staging-schedule-and-protocol)
-  - [Compiling Monero-Classic from source](#compiling-monero-classic-from-source)
+  - [Compiling monero-Classic from source](#compiling-monero-classic-from-source)
     - [Dependencies](#dependencies)
   - [Internationalization](#Internationalization)
   - [Using Tor](#using-tor)
@@ -27,16 +28,15 @@ Portions Copyright (c) 2012-2013 The monero-classic developers.
 
 ## Development resources
 
-- Web: [monero-classic.org](http://monero-classic.org)
+- Website: [monero-classic.org](https://monero-classic.org)
 - Mail: [dev@monero-classic.org](mailto:dev@monero-classic.org)
-- GitHub: [https://github.com/monero-classic/monero](https://github.com/monero-classic/monero)
+- GitHub: [https://github.com/monero-classic/monero-classic-v1](https://github.com/monero-classic/monero-classic-v1)
 
 ## Social Media
 
 - Twitter:[https://twitter.com/xmccurrency](https://twitter.com/xmccurrency)
-- Telegram Group:[https://t.me/xmccurrency](https://t.me/xmccurrency)
+- Telegram Group:[https://t.me/monero_classic](https://t.me/monero_classic)
 - Bitcointalk:[https://bitcointalk.org/index.php?topic=3256439.msg33919963#msg33919963](https://bitcointalk.org/index.php?topic=3256439.msg33919963#msg33919963)
-- QQ Group: Group One:700807911 Group Two:547278715
 
 
 ## Vulnerability response
@@ -75,13 +75,13 @@ These builds are of the master branch, which is used for active development and 
 
 Monero-Classic is a private, secure, untraceable, decentralised digital currency. You are your bank, you control your funds, and nobody can trace your transfers unless you allow them to do so.
 
-**Privacy:** Monero uses a cryptographically sound system to allow you to send and receive funds without your transactions being easily revealed on the blockchain (the ledger of transactions that everyone has). This ensures that your purchases, receipts, and all transfers remain absolutely private by default.
+**Privacy:** Monero-Classic uses a cryptographically sound system to allow you to send and receive funds without your transactions being easily revealed on the blockchain (the ledger of transactions that everyone has). This ensures that your purchases, receipts, and all transfers remain absolutely private by default.
 
 **Security:** Using the power of a distributed peer-to-peer consensus network, every transaction on the network is cryptographically secured. Individual wallets have a 25 word mnemonic seed that is only displayed once, and can be written down to backup the wallet. Wallet files are encrypted with a passphrase to ensure they are useless if stolen.
 
-**Untraceability:** By taking advantage of ring signatures, a special property of a certain type of cryptography, Monero is able to ensure that transactions are not only untraceable, but have an optional measure of ambiguity that ensures that transactions cannot easily be tied back to an individual user or computer.
+**Untraceability:** By taking advantage of ring signatures, a special property of a certain type of cryptography, Monero-Classic is able to ensure that transactions are not only untraceable, but have an optional measure of ambiguity that ensures that transactions cannot easily be tied back to an individual user or computer.
 
-**Decentralization:** The utility of monero-classic depends on its decentralised peer-to-peer consensus network - anyone should be able to run the monero-classic software, validate the integrity of the blockchain, and participate in all aspects of the monero-classic network using consumer-grade commodity hardware. Decentralization of the monero-classic network is maintained by software development that minimizes the costs of running the monero-classic software and inhibits the proliferation of specialized, non-commodity hardware.
+**Decentralization:** The utility of Monero-Classic depends on its decentralised peer-to-peer consensus network - anyone should be able to run the Monero-Classic software, validate the integrity of the blockchain, and participate in all aspects of the Monero-Classic network using consumer-grade commodity hardware. Decentralization of the Monero-Classic network is maintained by software development that minimizes the costs of running the Monero-Classic software and inhibits the proliferation of specialized, non-commodity hardware.
 
 ## About this project
 
@@ -93,9 +93,9 @@ As with many development projects, the repository on Github is considered to be 
 
 ## Supporting the project
 
-If you want to join our efforts, the easiest thing you can do is support the project financially. Both Monero-Classic and Bitcoin donations can be made to **donate.getmonero.org** if using a client that supports the [OpenAlias](https://openalias.org) standard. Alternatively you can send XMR to the Monero-Classic donation address via the `donate` command (type `help` in the command-line wallet for details).
+If you want to join our efforts, the easiest thing you can do is support the project financially. Both Monero-Classic and Bitcoin donations can be made to **donate.monero-classic.org** if using a client that supports the [OpenAlias](https://openalias.org) standard. Alternatively you can send XMC to the Monero-Classic donation address via the `donate` command (type `help` in the command-line wallet for details).
 
-The Monero donation address is: `44AFFq5kSiGBoZ4NMDwYtN18obc8AemS33DBLWs3H7otXft3XjrpDtQGv7SqSsaBYBb98uNbr2VBBEt7f2wfn3RVGQBEP3A` (viewkey: `f359631075708155cc3d92a32b75a7d02a5dcf27756707b47a2b31b21c389501`)
+The Monero-Classic donation address is: `44AFFq5kSiGBoZ4NMDwYtN18obc8AemS33DBLWs3H7otXft3XjrpDtQGv7SqSsaBYBb98uNbr2VBBEt7f2wfn3RVGQBEP3A` (viewkey: `f359631075708155cc3d92a32b75a7d02a5dcf27756707b47a2b31b21c389501`)
 
 The Bitcoin donation address is: `1KTexdemPdxSBcG55heUuTjDRYqbC5ZL8H`
 
@@ -204,11 +204,11 @@ FreeBSD one liner for required to build dependencies
 
 Clone recursively to pull-in needed submodule(s):
 
-`$ git clone --recursive https://github.com/monero-classic/monero`
+`$ git clone --recursive https://github.com/monero-classic/monero-classic`
 
 If you already have a repo cloned, initialize and update:
 
-`$ cd monero && git submodule init && git submodule update`
+`$ cd monero-classic && git submodule init && git submodule update`
 
 ### Build instructions
 
@@ -221,7 +221,7 @@ invokes cmake commands as needed.
 * Change to the root of the source code directory, change to the most recent release branch, and build:
 
     ```bash
-    cd monero
+    cd monero-classic
     git checkout master
     make
     ```
@@ -242,7 +242,7 @@ invokes cmake commands as needed.
 
 * The resulting executables can be found in `build/release/bin`
 
-* Add `PATH="$PATH:$HOME/monero/build/release/bin"` to `.profile`
+* Add `PATH="$PATH:$HOME/monero-classic/build/release/bin"` to `.profile`
 
 * Run Monero-Classic with `moneroclassicd --detach`
 
@@ -296,8 +296,8 @@ Tested on a Raspberry Pi Zero with a clean install of minimal Raspbian Stretch (
 * Clone monero-classic and checkout the most recent release version:
 
     ```bash
-    git clone https://github.com/monero-classic/monero.git
-    cd monero
+    git clone https://github.com/monero-classic/monero-classic.git
+    cd monero-classic
     git checkout tags/v0.14.1.2
     ```
 
@@ -311,7 +311,7 @@ Tested on a Raspberry Pi Zero with a clean install of minimal Raspbian Stretch (
 
 * The resulting executables can be found in `build/release/bin`
 
-* Add `PATH="$PATH:$HOME/monero/build/release/bin"` to `.profile`
+* Add `PATH="$PATH:$HOME/monero-classic/build/release/bin"` to `.profile`
 
 * Run Monero-Classic with `moneroclassicd --detach`
 
@@ -404,7 +404,7 @@ application.
 * To git clone, run:
 
     ```bash
-    git clone --recursive https://github.com/monero-classic/monero.git
+    git clone --recursive https://github.com/monero-classic/monero-classic.git
     ```
 
 **Building**
@@ -412,10 +412,10 @@ application.
 * Change to the cloned directory, run:
 
     ```bash
-    cd monero
+    cd monero-classic
     ```
 
-* If you would like a specific [version/tag](https://github.com/monero-classic/monero/tags), do a git checkout for that version. eg. 'v0.14.1.2'. If you don't care about the version and just want binaries from master, skip this step:
+* If you would like a specific [version/tag](https://github.com/monero-classic/monero-classic/tags), do a git checkout for that version. eg. 'v0.14.1.2'. If you don't care about the version and just want binaries from master, skip this step:
 
     ```bash
     git checkout v0.14.1.2
@@ -546,7 +546,7 @@ Packages are available for
 * Debian Bullseye and Sid
 
     ```bash
-    sudo apt install monero
+    sudo apt install monero-classic
     ```
 More info and versions in the [Debian package tracker](https://tracker.debian.org/pkg/monero).
 
